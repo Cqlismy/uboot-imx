@@ -141,6 +141,14 @@ config TARGET_MX6UL_14X14_EVK
 	select DM_THERMAL
 	select SUPPORT_SPL
 
+# add mx6ul_comp6ul_nand config
+config TARGET_MX6UL_COMP6UL_NAND
+	bool "mx6ul_comp6ul_nand"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+	select SUPPORT_SPL
+
 config TARGET_MX6UL_14X14_DDR3_ARM2
 	bool "mx6ul_14x14_ddr3_arm2"
 	select MX6UL
@@ -260,6 +268,10 @@ source "board/freescale/mx6sll_arm2/Kconfig"
 source "board/freescale/mx6sxsabresd/Kconfig"
 source "board/freescale/mx6sxsabreauto/Kconfig"
 source "board/freescale/mx6ul_14x14_evk/Kconfig"
+
+# add mx6ul_comp6ul_nand Kconfig
+source "board/freescale/mx6ul_comp6ul_nand/Kconfig"
+
 source "board/freescale/mx6sx_17x17_arm2/Kconfig"
 source "board/freescale/mx6sx_19x19_arm2/Kconfig"
 source "board/freescale/mx6ul_14x14_ddr3_arm2/Kconfig"

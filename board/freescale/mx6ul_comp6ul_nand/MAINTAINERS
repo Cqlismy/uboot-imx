@@ -1,0 +1,7 @@
+MX6UL_COMP6UL_NAND BOARD
+M:	Peng Fan <peng.fan@nxp.com>
+S:	Maintained
+F:	board/freescale/mx6ul_comp6ul_nand/
+F:	include/configs/mx6ul_comp6ul_nand.h
+F:	configs/mx6ul_comp6ul_nand_defconfig
+

@@ -1,0 +1,12 @@
+if TARGET_MX6UL_COMP6UL_NAND
+
+config SYS_BOARD
+	default "mx6ul_comp6ul_nand"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "mx6ul_comp6ul_nand"
+
+endif
