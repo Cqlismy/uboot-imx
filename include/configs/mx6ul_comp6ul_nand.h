@@ -32,10 +32,10 @@
 #define is_mx6ul_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6UL_9X9_EVK)
 
 #ifdef CONFIG_TARGET_MX6UL_9X9_EVK
-#define PHYS_SDRAM_SIZE		SZ_256M
+#define PHYS_SDRAM_SIZE		SZ_256M	
 #define CONFIG_BOOTARGS_CMA_SIZE   "cma=96M "
 #else
-#define PHYS_SDRAM_SIZE		SZ_256M
+#define PHYS_SDRAM_SIZE		SZ_256M		/* DRAM的大小 */
 #define CONFIG_BOOTARGS_CMA_SIZE   ""
 /* DCDC used on 14x14 EVK, no PMIC */
 #undef CONFIG_LDO_BYPASS_CHECK
@@ -50,8 +50,8 @@
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
-#define CONFIG_DISPLAY_CPUINFO
-#define CONFIG_DISPLAY_BOARDINFO
+#define CONFIG_DISPLAY_CPUINFO	/* 显示CPU相关信息 */
+#define CONFIG_DISPLAY_BOARDINFO	/* 显示board的相关信息 */
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
@@ -59,7 +59,7 @@
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
 
-#define CONFIG_MXC_UART
+#define CONFIG_MXC_UART		/* 串口1定义相关(debug调试串口) */
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
 /* MMC Configs */
@@ -93,11 +93,12 @@
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 #ifdef CONFIG_SYS_BOOT_NAND
-#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:4m(boot),16m(kernel),512k(dtb),-(rootfs) "
 #else
 #define CONFIG_MFG_NAND_PARTITION ""
 #endif
 
+/* MFG工具烧写相关环境变量配置 */
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 	    CONFIG_BOOTARGS_CMA_SIZE \
@@ -113,6 +114,7 @@
 	"initrd_high=0xffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
+/* 从nand flash启动的环境变量配置 */
 #if defined(CONFIG_SYS_BOOT_NAND)
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
@@ -120,12 +122,12 @@
 	"fdt_addr=0x83000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=ttymxc0\0" \
-	"bootargs=console=ttymxc0,115200 ubi.mtd=4 "  \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=3 "  \
 		"root=ubi0:rootfs rootfstype=ubifs "		     \
 		CONFIG_BOOTARGS_CMA_SIZE \
-		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
-	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
-		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+		"mtdparts=gpmi-nand:4m(boot),16m(kernel),512k(dtb),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x400000 0x1000000;"\
+		"nand read ${fdt_addr} 0x1400000 0x80000;"\
 		"bootz ${loadaddr} - ${fdt_addr}\0"
 
 #else
@@ -248,7 +250,7 @@
 #ifdef CONFIG_SYS_BOOT_QSPI
 #define CONFIG_FSL_QSPI
 #define CONFIG_ENV_IS_IN_SPI_FLASH
-#elif defined CONFIG_SYS_BOOT_NAND
+#elif defined CONFIG_SYS_BOOT_NAND	/* 定义从nand flash启动 */
 #define CONFIG_SYS_USE_NAND
 #define CONFIG_ENV_IS_IN_NAND
 #else
@@ -305,8 +307,8 @@
 #define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
 #elif defined(CONFIG_ENV_IS_IN_NAND)
 #undef CONFIG_ENV_SIZE
-#define CONFIG_ENV_OFFSET		(60 << 20)
-#define CONFIG_ENV_SECT_SIZE		(128 << 10)
+#define CONFIG_ENV_OFFSET		(2 << 20)	/* 2MB */
+#define CONFIG_ENV_SECT_SIZE		(128 << 10)	/* 128KB */
 #define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
 #endif
 

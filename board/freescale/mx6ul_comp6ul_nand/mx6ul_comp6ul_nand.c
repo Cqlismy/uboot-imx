@@ -89,11 +89,13 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
 	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
-#define IOX_SDI IMX_GPIO_NR(5, 10)
-#define IOX_STCP IMX_GPIO_NR(5, 7)
-#define IOX_SHCP IMX_GPIO_NR(5, 11)
-#define IOX_OE IMX_GPIO_NR(5, 8)
+/* 定义74hc595(串行输入并行输出)芯片引脚相关控制引脚 */
+#define IOX_SDI IMX_GPIO_NR(5, 10)	/* 串行输入引脚 */
+#define IOX_STCP IMX_GPIO_NR(5, 7)	/* 输出数据锁存时钟线 */
+#define IOX_SHCP IMX_GPIO_NR(5, 11)	/* 数据输入时钟线 */
+#define IOX_OE IMX_GPIO_NR(5, 8)	/* 芯片使能引脚 */
 
+/* 74hc595芯片控制引脚相关寄存器复用配置 */
 static iomux_v3_cfg_t const iox_pads[] = {
 	/* IOX_SDI */
 	MX6_PAD_BOOT_MODE0__GPIO5_IO10 | MUX_PAD_CTRL(NO_PAD_CTRL),
@@ -106,24 +108,24 @@ static iomux_v3_cfg_t const iox_pads[] = {
 };
 
 /*
- * HDMI_nRST --> Q0
- * ENET1_nRST --> Q1
- * ENET2_nRST --> Q2
- * CAN1_2_STBY --> Q3
- * BT_nPWD --> Q4
- * CSI_RST --> Q5
- * CSI_PWDN --> Q6
- * LCD_nPWREN --> Q7
+ * CSI_PWDN --> Q0
+ * CSI_NRST --> Q1
+ * WIFI_PWEN_B --> Q2
+ * MINIPCIE_NRST --> Q3
+ * MINIPCIE_NDIS --> Q4
+ * PIO_BUZZ --> Q5
+ * NO_PIN_1 --> Q6
+ * NO_PIN_2 --> Q7
  */
 enum qn {
-	HDMI_NRST,
-	ENET1_NRST,
-	ENET2_NRST,
-	CAN1_2_STBY,
-	BT_NPWD,
-	CSI_RST,
 	CSI_PWDN,
-	LCD_NPWREN,
+	CSI_NRST,
+	WIFI_PWEN_B,
+	MINIPCIE_NRST,
+	MINIPCIE_NDIS,
+	PIO_BUZZ,
+	NO_PIN_1,
+	NO_PIN_2,
 };
 
 enum qn_func {
@@ -138,34 +140,37 @@ enum qn_level {
 };
 
 static enum qn_level seq[3][2] = {
-	{0, 1}, {1, 1}, {0, 0}
+	{0, 1},	/* 复位时序(0->1) */
+	{1, 1}, /* 引脚使能(输出高) */
+	{0, 0}	/* 引脚失能(输出低) */
 };
 
 static enum qn_func qn_output[8] = {
-	qn_reset, qn_reset, qn_reset, qn_enable, qn_disable, qn_reset,
+	qn_enable, qn_reset, qn_enable, qn_reset, qn_enable, qn_disable,
 	qn_disable, qn_disable
 };
 
+/* 74hc595初始化函数 */
 static void iox74lv_init(void)
 {
 	int i;
 
-	gpio_direction_output(IOX_OE, 0);
+	gpio_direction_output(IOX_OE, 0);	/* 芯片使能打开 */
 
 	for (i = 7; i >= 0; i--) {
-		gpio_direction_output(IOX_SHCP, 0);
-		gpio_direction_output(IOX_SDI, seq[qn_output[i]][0]);
+		gpio_direction_output(IOX_SHCP, 0);	/* 时钟线拉低 */
+		gpio_direction_output(IOX_SDI, seq[qn_output[i]][0]);	/* 串行数据输入 */
 		udelay(500);
-		gpio_direction_output(IOX_SHCP, 1);
+		gpio_direction_output(IOX_SHCP, 1);	/* 时钟线拉高 */
 		udelay(500);
 	}
 
-	gpio_direction_output(IOX_STCP, 0);
+	gpio_direction_output(IOX_STCP, 0);	/* 数据锁存时钟线拉低 */
 	udelay(500);
 	/*
 	 * shift register will be output to pins
 	 */
-	gpio_direction_output(IOX_STCP, 1);
+	gpio_direction_output(IOX_STCP, 1);	/* 数据锁存时钟线拉高(更新数据并行输出) */
 
 	for (i = 7; i >= 0; i--) {
 		gpio_direction_output(IOX_SHCP, 0);
@@ -221,7 +226,7 @@ void iox74lv_set(int index)
 	gpio_direction_output(IOX_STCP, 1);
 };
 
-
+/* I2C接口的相关定义配置 */
 #ifdef CONFIG_SYS_I2C_MXC
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC and EEPROM */
@@ -397,6 +402,7 @@ static iomux_v3_cfg_t const usdhc2_dat3_pads[] = {
 };
 #endif
 
+/* 串口1引脚复用初始化 */
 static void setup_iomux_uart(void)
 {
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
@@ -597,6 +603,7 @@ int board_ehci_hcd_init(int port)
 }
 #endif
 
+/* nand flash相关定义配置 */
 #ifdef CONFIG_NAND_MXS
 static iomux_v3_cfg_t const nand_pads[] = {
 	MX6_PAD_NAND_DATA00__RAWNAND_DATA00 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
@@ -618,6 +625,7 @@ static iomux_v3_cfg_t const nand_pads[] = {
 	MX6_PAD_NAND_DQS__RAWNAND_DQS | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
 };
 
+/* nand flash相关引脚配置初始化 */
 static void setup_gpmi_nand(void)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -633,6 +641,7 @@ static void setup_gpmi_nand(void)
 }
 #endif
 
+/* fec网络相关引脚配置 */
 #ifdef CONFIG_FEC_MXC
 /*
  * pin conflicts for fec1 and fec2, GPIO1_IO06 and GPIO1_IO07 can only
@@ -666,6 +675,7 @@ static iomux_v3_cfg_t const fec2_pads[] = {
 	MX6_PAD_ENET2_RX_ER__ENET2_RX_ER | MUX_PAD_CTRL(ENET_PAD_CTRL),
 };
 
+/* fec网络相关引脚复用 */
 static void setup_iomux_fec(int fec_id)
 {
 	if (fec_id == 0)
@@ -676,6 +686,7 @@ static void setup_iomux_fec(int fec_id)
 						 ARRAY_SIZE(fec2_pads));
 }
 
+/* 板级网络初始化函数 */
 int board_eth_init(bd_t *bis)
 {
 	setup_iomux_fec(CONFIG_FEC_ENET_DEV);
@@ -684,6 +695,7 @@ int board_eth_init(bd_t *bis)
 				       CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
 }
 
+/* 网络设置函数 */
 static int setup_fec(int fec_id)
 {
 	struct iomuxc *const iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
@@ -731,6 +743,7 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
+/* LCD相关定义配置 */
 #ifdef CONFIG_VIDEO_MXS
 static iomux_v3_cfg_t const lcd_pads[] = {
 	MX6_PAD_LCD_CLK__LCDIF_CLK | MUX_PAD_CTRL(LCD_PAD_CTRL),
@@ -807,6 +820,7 @@ struct display_info_t const displays[] = {{
 size_t display_count = ARRAY_SIZE(displays);
 #endif
 
+/* board相关早期初始化 */
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
@@ -814,6 +828,7 @@ int board_early_init_f(void)
 	return 0;
 }
 
+/* 板子初始化(board_init_r()函数中调用) */
 int board_init(void)
 {
 	/* Address of boot parameters */
@@ -880,12 +895,13 @@ int board_late_init(void)
 	return 0;
 }
 
+/* 板子检查函数 */
 int checkboard(void)
 {
 	if (is_mx6ul_9x9_evk())
 		puts("Board: MX6UL 9x9 EVK\n");
 	else
-		puts("Board: MX6UL 14x14 EVK\n");
+		puts("Board: MX6UL 14x14 COMP6UL\n");
 
 	return 0;
 }
